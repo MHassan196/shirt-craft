@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useSnapshot } from "valtio";
 import config from "../config/config";
@@ -26,14 +26,22 @@ const Customizer = () => {
     stylishShirt: false,
   });
 
-  //show tab content depending on the active Tab
+  const colorPickerRef = useRef(null);
+  const filePickerRef = useRef(null);
+
   const generateTabContent = () => {
     switch (activeEditorTab) {
       case "colorpicker":
-        return <ColorPicker />;
+        return <ColorPicker ref={colorPickerRef} />;
       case "filepicker":
-        return <FilePicker file={file} setFile={setFile} readFile={readFile} />;
-
+        return (
+          <FilePicker
+            ref={filePickerRef}
+            file={file}
+            setFile={setFile}
+            readFile={readFile}
+          />
+        );
       default:
         return null;
     }
@@ -78,6 +86,32 @@ const Customizer = () => {
     });
   };
 
+  const handleClickOutside = (event) => {
+    if (
+      colorPickerRef.current &&
+      !colorPickerRef.current.contains(event.target) &&
+      filePickerRef.current &&
+      !filePickerRef.current.contains(event.target)
+    ) {
+      setActiveEditorTab("");
+    }
+  };
+
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleTabClick = (tabName) => {
+    if (activeEditorTab === tabName) {
+      setActiveEditorTab("");
+    } else {
+      setActiveEditorTab(tabName);
+    }
+  };
+
   return (
     <AnimatePresence>
       {!snap.intro && (
@@ -93,7 +127,7 @@ const Customizer = () => {
                   <Tab
                     key={tab.name}
                     tab={tab}
-                    handleClick={() => setActiveEditorTab(tab.name)}
+                    handleClick={() => handleTabClick(tab.name)}
                   />
                 ))}
 
